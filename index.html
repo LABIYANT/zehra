@@ -14,11 +14,12 @@
         background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffd1ff, #fbc2eb);
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
-        font-family: 'Open Sans', sans-serif; /* Daha modern ve okunabilir bir varsayılan font */
+        font-family: 'Open Sans', sans-serif;
         color: white;
+        user-select: none; /* Metin seçimini engeller */
+        -webkit-tap-highlight-color: transparent; /* Mobilde tıklama rengini kaldırır */
     }
 
-    /* Arka plan renk geçiş animasyonu */
     @keyframes gradientBG {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
@@ -41,17 +42,17 @@
     h1 {
         margin: 0;
         text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-        transition: opacity 0.5s ease-in-out, font-size 0.3s ease; /* Font size için de geçiş */
+        transition: opacity 0.5s ease-in-out, font-size 0.3s ease;
         line-height: 1.4;
         opacity: 1;
-        font-weight: 700; /* Kalınlık ekleyelim */
+        font-weight: 700;
     }
 
     .fade-out {
         opacity: 0;
     }
 
-    /* Yüzen Kalpler İçin Stil */
+    /* Yüzen Kalpler */
     .heart {
         position: absolute;
         bottom: -50px;
@@ -63,7 +64,7 @@
         transform: rotate(-45deg);
         z-index: 1;
         pointer-events: none;
-        box-shadow: 0 0 8px rgba(255,255,255,0.4); /* Kalplere hafif parlama */
+        box-shadow: 0 0 8px rgba(255,255,255,0.4);
     }
 
     .heart:before, .heart:after {
@@ -83,12 +84,36 @@
         100% { transform: translateY(-110vh) rotate(-45deg) scale(1.2); opacity: 0; }
     }
 
-    /* Başlangıç bilgilendirme metni */
+    /* --- YENİ EKLENEN ÇİÇEK STİLİ --- */
+    .flower {
+        position: absolute;
+        font-size: 2rem; /* Çiçek boyutu */
+        pointer-events: none; /* Tıklamayı engellemesin */
+        z-index: 20; /* Yazının üstünde olsun */
+        animation: bloomAndFade 1.5s ease-out forwards;
+    }
+
+    @keyframes bloomAndFade {
+        0% { 
+            transform: scale(0) rotate(0deg); 
+            opacity: 0; 
+        }
+        50% { 
+            transform: scale(1.5) rotate(180deg); 
+            opacity: 1; 
+        }
+        100% { 
+            transform: scale(2) translateY(-50px) rotate(360deg); 
+            opacity: 0; 
+        }
+    }
+
+    /* İpucu Metni */
     .hint {
         position: absolute;
         bottom: 30px;
         font-size: 14px;
-        font-family: 'Montserrat', sans-serif; /* İpucu için farklı bir font */
+        font-family: 'Montserrat', sans-serif;
         opacity: 0.7;
         animation: pulse 2s infinite;
         text-shadow: 1px 1px 5px rgba(0,0,0,0.1);
@@ -118,7 +143,7 @@ const hintText = document.getElementById('hint-text');
 const clickArea = document.getElementById('click-area');
 const audio = document.getElementById('bg-music');
 
-// Mesaj Listesi (Zehra için güncellendi)
+// Mesaj Listesi
 const mainMessages = [
     "SENİ SEVİYORUM ZEHRA",
     "Kalbimin Tek Sahibi Zehra",
@@ -144,23 +169,28 @@ const mainMessages = [
     "Zehra, Sen Benim Her Şeyimsin"
 ];
 
-// Daha okunabilir ve estetik font listesi
+// Çiçek Emojileri Listesi
+const flowers = ['🌹', '🌷', '🌻', '🌼', '🌸', '🌺', '💐', '💮', '🪷'];
+
 const fontFamilies = [
-    "'Playfair Display', serif", // Şık ve klasik
-    "'Montserrat', sans-serif",   // Modern ve temiz
-    "'Open Sans', sans-serif"     // Sade ve çok okunabilir
+    "'Playfair Display', serif", 
+    "'Montserrat', sans-serif",   
+    "'Open Sans', sans-serif"     
 ];
 
 let msgIdx = 0;
 let isFirstClick = true;
 
 // Ekrana tıklama olayı
-clickArea.addEventListener('click', () => {
-    // İlk tıklamada müziği başlat ve ipucu yazısını kaldır
+clickArea.addEventListener('click', (e) => {
+    
+    // Çiçek efektini hemen çağır (Koordinatları gönder)
+    createFlower(e.clientX, e.clientY);
+
+    // İlk tıklama kontrolü
     if (isFirstClick) {
         hintText.style.display = 'none';
-        // Eğer src kısmına müzik eklediysen burada çalar
-        // audio.play().catch(e => console.log("Müzik çalma hatası (tarayıcı engeli olabilir):", e));
+        // audio.play().catch(e => console.log("Müzik hatası:", e));
         isFirstClick = false;
     }
 
@@ -168,74 +198,81 @@ clickArea.addEventListener('click', () => {
     mainMsg.classList.add('fade-out');
 
     setTimeout(() => {
-        // Mesajı ve fontu değiştir
         msgIdx = (msgIdx + 1) % mainMessages.length;
         mainMsg.textContent = mainMessages[msgIdx];
         
-        // Rastgele bir font seç
         const randomFont = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
         mainMsg.style.fontFamily = randomFont;
         
-        // Font boyutunu ayarla
         adjustFontSize();
 
-        // Geri getir
         mainMsg.classList.remove('fade-out');
         
-        // Her tıklamada ekstra kalp patlaması yap
         createBurstHearts();
-    }, 500); // 0.5 saniye bekle (fade-out süresi kadar)
+    }, 500); 
 });
 
-// Font boyutunu ekrana sığacak şekilde ayarla
+// Çiçek Oluşturma Fonksiyonu
+function createFlower(x, y) {
+    // Rastgele bir çiçek seç
+    const randomFlower = flowers[Math.floor(Math.random() * flowers.length)];
+    
+    // Element oluştur
+    const flowerEl = document.createElement('div');
+    flowerEl.classList.add('flower');
+    flowerEl.innerText = randomFlower;
+    
+    // Tıklanan yere konumlandır (Biraz rastgelelik ekleyerek üst üste binmesini engelle)
+    const offsetX = (Math.random() - 0.5) * 50; // -25px ile +25px arası sapma
+    const offsetY = (Math.random() - 0.5) * 50;
+    
+    flowerEl.style.left = (x + offsetX) + 'px';
+    flowerEl.style.top = (y + offsetY) + 'px';
+    
+    // Sayfaya ekle
+    document.body.appendChild(flowerEl);
+    
+    // Animasyon bitince (1.5 sn sonra) sil
+    setTimeout(() => {
+        flowerEl.remove();
+    }, 1500);
+}
+
 function adjustFontSize() {
     const length = mainMsg.textContent.length;
     let size;
-    
-    // Metin uzunluğuna göre daha iyi bir boyutlandırma
     if (length < 15) size = "12vw";
     else if (length < 25) size = "8vw";
     else size = "6vw";
-
     mainMsg.style.fontSize = size;
 }
 
-// Arka plan kalpleri oluşturma fonksiyonu
 function createHeart() {
     const heart = document.createElement('div');
     heart.classList.add('heart');
-    
-    // Rastgele pozisyon ve boyut
     heart.style.left = Math.random() * 100 + "vw";
-    heart.style.animation = `floatUp ${Math.random() * 3 + 4}s ease-out forwards`; // 4-7 saniye arası
+    heart.style.animation = `floatUp ${Math.random() * 3 + 4}s ease-out forwards`;
     
-    // Rastgele renk tonları (pembe/kırmızı/beyaz)
     const colors = ["rgba(255, 255, 255, 0.6)", "rgba(255, 182, 193, 0.6)", "rgba(255, 105, 180, 0.5)"];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     
     heart.style.backgroundColor = randomColor;
-    heart.style.setProperty('--heart-color', randomColor); // pseudo elementler için renk değişkeni
+    heart.style.setProperty('--heart-color', randomColor);
 
     document.body.appendChild(heart);
-
-    // 6 saniye sonra DOM'dan sil (performans için)
     setTimeout(() => {
         heart.remove();
-    }, 7000); // Animasyon süresine göre ayarlandı
+    }, 7000);
 }
 
-// Tıklayınca çoklu kalp çıkarma efekti
 function createBurstHearts() {
     for(let i=0; i<5; i++) {
         setTimeout(createHeart, i * 100);
     }
 }
 
-// Sayfa açılınca düzenli aralıklarla kalp üret
-setInterval(createHeart, 600); // Kalp çıkma sıklığı azaltıldı
-
-// Başlangıç ayarı
-mainMsg.style.fontFamily = "'Playfair Display', serif"; // Başlangıçta daha şık bir font
+setInterval(createHeart, 600);
+mainMsg.style.fontFamily = "'Playfair Display', serif";
 adjustFontSize();
 
 </script>
