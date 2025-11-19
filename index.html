@@ -16,8 +16,8 @@
         animation: gradientBG 15s ease infinite;
         font-family: 'Open Sans', sans-serif;
         color: white;
-        user-select: none; /* Metin seçimini engeller */
-        -webkit-tap-highlight-color: transparent; /* Mobilde tıklama rengini kaldırır */
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
     }
 
     @keyframes gradientBG {
@@ -41,18 +41,19 @@
 
     h1 {
         margin: 0;
-        text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-        transition: opacity 0.5s ease-in-out, font-size 0.3s ease;
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.2); /* Gölgeyi hafiflettim */
+        transition: opacity 0.3s ease, font-size 0.3s ease; /* Süreyi kısalttım */
         line-height: 1.4;
         opacity: 1;
         font-weight: 700;
+        will-change: opacity, transform; /* Performans ipucu */
     }
 
     .fade-out {
         opacity: 0;
     }
 
-    /* Yüzen Kalpler */
+    /* Kalp Stili */
     .heart {
         position: absolute;
         bottom: -50px;
@@ -64,7 +65,7 @@
         transform: rotate(-45deg);
         z-index: 1;
         pointer-events: none;
-        box-shadow: 0 0 8px rgba(255,255,255,0.4);
+        will-change: transform;
     }
 
     .heart:before, .heart:after {
@@ -84,31 +85,32 @@
         100% { transform: translateY(-110vh) rotate(-45deg) scale(1.2); opacity: 0; }
     }
 
-    /* --- YENİ EKLENEN ÇİÇEK STİLİ --- */
+    /* Çiçek Stili - Optimize Edildi */
     .flower {
         position: absolute;
-        font-size: 2rem; /* Çiçek boyutu */
-        pointer-events: none; /* Tıklamayı engellemesin */
-        z-index: 20; /* Yazının üstünde olsun */
-        animation: bloomAndFade 1.5s ease-out forwards;
+        font-size: 2rem;
+        pointer-events: none;
+        z-index: 20;
+        /* will-change: transform GPU'ya işi devreder */
+        will-change: transform, opacity; 
+        animation: bloomAndFade 1.2s ease-out forwards; /* Süreyi biraz kısalttım */
     }
 
     @keyframes bloomAndFade {
         0% { 
-            transform: scale(0) rotate(0deg); 
+            transform: scale(0); 
             opacity: 0; 
         }
-        50% { 
-            transform: scale(1.5) rotate(180deg); 
+        40% { 
+            transform: scale(1.5); 
             opacity: 1; 
         }
         100% { 
-            transform: scale(2) translateY(-50px) rotate(360deg); 
+            transform: scale(1.8) translateY(-50px); 
             opacity: 0; 
         }
     }
 
-    /* İpucu Metni */
     .hint {
         position: absolute;
         bottom: 30px;
@@ -116,7 +118,6 @@
         font-family: 'Montserrat', sans-serif;
         opacity: 0.7;
         animation: pulse 2s infinite;
-        text-shadow: 1px 1px 5px rgba(0,0,0,0.1);
     }
 
     @keyframes pulse {
@@ -129,8 +130,7 @@
 </head>
 <body>
 
-<audio id="bg-music" loop>
-    </audio>
+<audio id="bg-music" loop></audio>
 
 <div class="container" id="click-area">
     <h1 id="main-message">SENİ SEVİYORUM ZEHRA</h1>
@@ -141,9 +141,7 @@
 const mainMsg = document.getElementById('main-message');
 const hintText = document.getElementById('hint-text');
 const clickArea = document.getElementById('click-area');
-const audio = document.getElementById('bg-music');
 
-// Mesaj Listesi
 const mainMessages = [
     "SENİ SEVİYORUM ZEHRA",
     "Kalbimin Tek Sahibi Zehra",
@@ -169,7 +167,6 @@ const mainMessages = [
     "Zehra, Sen Benim Her Şeyimsin"
 ];
 
-// Çiçek Emojileri Listesi
 const flowers = ['🌹', '🌷', '🌻', '🌼', '🌸', '🌺', '💐', '💮', '🪷'];
 
 const fontFamilies = [
@@ -180,62 +177,106 @@ const fontFamilies = [
 
 let msgIdx = 0;
 let isFirstClick = true;
+let lastClickTime = 0;
+let clickCombo = 0;
 
-// Ekrana tıklama olayı
+// PERFORMANS LİMİTLERİ
+const MAX_FLOWERS_ON_SCREEN = 40; // Ekranda aynı anda en fazla bu kadar çiçek olabilir
+
 clickArea.addEventListener('click', (e) => {
     
-    // Çiçek efektini hemen çağır (Koordinatları gönder)
-    createFlower(e.clientX, e.clientY);
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastClickTime;
+    lastClickTime = currentTime;
 
-    // İlk tıklama kontrolü
+    if (timeDiff < 300) {
+        clickCombo++;
+    } else {
+        clickCombo = 0;
+    }
+
+    // Optimize edilmiş patlama
+    if (clickCombo > 1) {
+        createFullScreenFlowers(); 
+    } else {
+        createSingleFlower(e.clientX, e.clientY); 
+    }
+
     if (isFirstClick) {
         hintText.style.display = 'none';
-        // audio.play().catch(e => console.log("Müzik hatası:", e));
         isFirstClick = false;
     }
 
-    // Efektli geçiş
-    mainMsg.classList.add('fade-out');
+    // Yazı değişimini de biraz yavaşlatarak CPU'yu rahatlatabiliriz
+    // Sadece fade-out animasyonu bitmişse değiştir
+    if(!mainMsg.classList.contains('fade-out')) {
+         changeMessage();
+    }
+    
+    // Kalp patlaması (sayısını azalttım performans için)
+    createBurstHearts();
+});
 
+function changeMessage() {
+    mainMsg.classList.add('fade-out');
     setTimeout(() => {
         msgIdx = (msgIdx + 1) % mainMessages.length;
         mainMsg.textContent = mainMessages[msgIdx];
-        
         const randomFont = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
         mainMsg.style.fontFamily = randomFont;
-        
         adjustFontSize();
-
         mainMsg.classList.remove('fade-out');
-        
-        createBurstHearts();
-    }, 500); 
-});
+    }, 300);
+}
 
-// Çiçek Oluşturma Fonksiyonu
-function createFlower(x, y) {
-    // Rastgele bir çiçek seç
-    const randomFlower = flowers[Math.floor(Math.random() * flowers.length)];
+function createSingleFlower(x, y) {
+    spawnFlowerElement(x, y);
+}
+
+function createFullScreenFlowers() {
+    // OPTİMİZASYON: 30 yerine 10 tane oluşturuyoruz.
+    // Seri tıklandığı için bu sayı zaten saniyede 40-50'ye çıkacaktır.
+    const flowerCount = 10; 
     
-    // Element oluştur
+    for(let i = 0; i < flowerCount; i++) {
+        const randomX = Math.random() * window.innerWidth;
+        const randomY = Math.random() * window.innerHeight;
+        
+        // Gecikmeyi kaldırdım, anlık gelsin, setTimeout işlemciyi yorar
+        spawnFlowerElement(randomX, randomY);
+    }
+}
+
+function spawnFlowerElement(x, y) {
+    // OPTİMİZASYON: Eğer ekranda çok fazla çiçek varsa yenisini ekleme
+    const existingFlowers = document.getElementsByClassName('flower');
+    if (existingFlowers.length >= MAX_FLOWERS_ON_SCREEN) {
+        // İstersen en eskisini silip yenisini ekleyebilirsin ama
+        // hiç eklememek en performanslısıdır.
+        // Veya en eskiyi silelim ki akış durmasın:
+        existingFlowers[0].remove();
+    }
+
+    const randomFlower = flowers[Math.floor(Math.random() * flowers.length)];
     const flowerEl = document.createElement('div');
     flowerEl.classList.add('flower');
     flowerEl.innerText = randomFlower;
     
-    // Tıklanan yere konumlandır (Biraz rastgelelik ekleyerek üst üste binmesini engelle)
-    const offsetX = (Math.random() - 0.5) * 50; // -25px ile +25px arası sapma
-    const offsetY = (Math.random() - 0.5) * 50;
+    flowerEl.style.left = x + 'px';
+    flowerEl.style.top = y + 'px';
     
-    flowerEl.style.left = (x + offsetX) + 'px';
-    flowerEl.style.top = (y + offsetY) + 'px';
+    // Rastgele döndürme açısını CSS ile değil JS ile verince bazen daha hızlı olur
+    // ama burada CSS animasyonu yeterli.
     
-    // Sayfaya ekle
+    const randomScale = 0.8 + Math.random() * 1.2; 
+    flowerEl.style.fontSize = (2 * randomScale) + "rem";
+
     document.body.appendChild(flowerEl);
     
-    // Animasyon bitince (1.5 sn sonra) sil
+    // Temizlik süresini kısalttım (1.2sn)
     setTimeout(() => {
         flowerEl.remove();
-    }, 1500);
+    }, 1200);
 }
 
 function adjustFontSize() {
@@ -248,16 +289,16 @@ function adjustFontSize() {
 }
 
 function createHeart() {
+    // Arka plan kalpleri de optimize edelim, çok birikmesin
+    if (document.getElementsByClassName('heart').length > 15) return;
+
     const heart = document.createElement('div');
     heart.classList.add('heart');
     heart.style.left = Math.random() * 100 + "vw";
     heart.style.animation = `floatUp ${Math.random() * 3 + 4}s ease-out forwards`;
     
     const colors = ["rgba(255, 255, 255, 0.6)", "rgba(255, 182, 193, 0.6)", "rgba(255, 105, 180, 0.5)"];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
-    heart.style.backgroundColor = randomColor;
-    heart.style.setProperty('--heart-color', randomColor);
+    heart.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
     document.body.appendChild(heart);
     setTimeout(() => {
@@ -266,12 +307,13 @@ function createHeart() {
 }
 
 function createBurstHearts() {
-    for(let i=0; i<5; i++) {
-        setTimeout(createHeart, i * 100);
+    // Tıklama başına 2 kalp yeterli
+    for(let i=0; i<2; i++) { 
+        createHeart(); // Timeout kullanmadan direkt çağırdım
     }
 }
 
-setInterval(createHeart, 600);
+setInterval(createHeart, 800); // Arka plan kalp üretimini yavaşlattım
 mainMsg.style.fontFamily = "'Playfair Display', serif";
 adjustFontSize();
 
