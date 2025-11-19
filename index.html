@@ -1,165 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-<title>Seni Seviyorum Rana</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+<meta charset="UTF-8">
+<title>Seni Seviyorum Zehra</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
-body, html { height: 100%; margin: 0; overflow: hidden }
-.container { 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    height: 100%; 
-    background-color: lightpink; 
-    font-size: 8vw; 
-    text-align: center;
-    word-break: break-word;
-} 
-.messages p { margin-bottom: 20px; display: none }
-.visible { display: block } 
+    body, html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffd1ff, #fbc2eb);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        font-family: 'Open Sans', sans-serif; /* Daha modern ve okunabilir bir varsayılan font */
+        color: white;
+    }
+
+    /* Arka plan renk geçiş animasyonu */
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        text-align: center;
+        padding: 20px;
+        position: relative;
+        z-index: 10;
+        cursor: pointer;
+    }
+
+    h1 {
+        margin: 0;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        transition: opacity 0.5s ease-in-out, font-size 0.3s ease; /* Font size için de geçiş */
+        line-height: 1.4;
+        opacity: 1;
+        font-weight: 700; /* Kalınlık ekleyelim */
+    }
+
+    .fade-out {
+        opacity: 0;
+    }
+
+    /* Yüzen Kalpler İçin Stil */
+    .heart {
+        position: absolute;
+        bottom: -50px;
+        background-color: rgba(255, 255, 255, 0.6);
+        display: inline-block;
+        height: 30px;
+        margin: 0 10px;
+        width: 30px;
+        transform: rotate(-45deg);
+        z-index: 1;
+        pointer-events: none;
+        box-shadow: 0 0 8px rgba(255,255,255,0.4); /* Kalplere hafif parlama */
+    }
+
+    .heart:before, .heart:after {
+        content: "";
+        background-color: rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        height: 30px;
+        position: absolute;
+        width: 30px;
+    }
+
+    .heart:before { top: -15px; left: 0; }
+    .heart:after { left: 15px; top: 0; }
+
+    @keyframes floatUp {
+        0% { transform: translateY(0) rotate(-45deg) scale(0.8); opacity: 1; }
+        100% { transform: translateY(-110vh) rotate(-45deg) scale(1.2); opacity: 0; }
+    }
+
+    /* Başlangıç bilgilendirme metni */
+    .hint {
+        position: absolute;
+        bottom: 30px;
+        font-size: 14px;
+        font-family: 'Montserrat', sans-serif; /* İpucu için farklı bir font */
+        opacity: 0.7;
+        animation: pulse 2s infinite;
+        text-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+    }
+
+    @keyframes pulse {
+        0% { opacity: 0.4; }
+        50% { opacity: 1; }
+        100% { opacity: 0.4; }
+    }
+
 </style>
 </head>
 <body>
-<div class="container">
-<h1 id="main-message">SENİ SEVİYORUM RANA</h1>
+
+<audio id="bg-music" loop>
+    </audio>
+
+<div class="container" id="click-area">
+    <h1 id="main-message">SENİ SEVİYORUM ZEHRA</h1>
+    <div class="hint" id="hint-text">Devam etmek için ekrana dokun...</div>
 </div>
-<div class="messages"></div>
 
 <script>
-const msgsContainer = document.querySelector('.messages');
 const mainMsg = document.getElementById('main-message');
+const hintText = document.getElementById('hint-text');
+const clickArea = document.getElementById('click-area');
+const audio = document.getElementById('bg-music');
 
+// Mesaj Listesi (Zehra için güncellendi)
 const mainMessages = [
-    "SENİ SEVİYORUM RANA",
-    "Kalbimin Tek Sahibi",
-    "Seninle Sonsuza Kadar",
-    "Aşkımız Ebedi",
-    'Seninle olmak, dünyadaki en güzel şey.',
-    'Gözlerinde kaybolmak istiyorum.',
-    'Kalbimin tek sahibi sensin.',
-    'Seni her gün daha çok seviyorum.',
-    "Seninle geçirdiğim her an bir hediye.",
-    "Gülüşün dünyamı aydınlatıyor.",
-    "Sen benim ilham kaynağımsın.",
-    "Hayatımın anlamı sensin.",
-    "Seninle her şey daha güzel.",
-    "Kalbimin ritmi senin adınla atıyor.",
-    "Sen benim en güzel melodimsin.",
-    "Seninle geleceğe umutla bakıyorum.",
-    "Aşkımızın sınırı yok.",
-    "Sen benim en değerli hazinemsin.",
-    "Seninle olmak, kendimi evimde hissetmek gibi.",
-    "Gözlerin, beni sonsuzluğa götüren bir kapı.",
-    "Seninle her yeni gün bir macera.",
-    "Sen benim en büyük mutluluğumsun.",
-    "Kalbimin en derin köşesinde sen varsın.",
-    "Seninle yaşamak, bir rüyada gibi.",
-    "Aşkımız, zamanın ötesinde bir bağ.",
-    "Sen benim en güzel hikayemsin.",
-    "Seninle her şey mümkün.",
-    "Sen benim en değerli varlığımsın.",
-    "Seninle olmak, dünyadaki en büyük şansım.",
-    "Gülüşün, kalbimi ısıtan bir güneş.",
-    "Sen benim en büyük motivasyonumsun.",
-    "Seninle her an özel.",
-    "Aşkımız, zamanla daha da güçleniyor.",
-    "Sen benim en güzel düşümü gerçekleştirdin.",
-    "Seninle olmak, kalbimin en derin arzusuydu.",
-    "Sen benim hayatımın en güzel renklerisin.",
-    "Seninle her şey daha anlamlı.",
-    "Aşkımız, bir peri masalından fırlamış gibi.",
-    "Sen benim en büyük ilham kaynağımsın.",
-    "Seninle olmak, dünyanın en güzel hissi.",
-    "Gözlerin, kalbimin en derinlerine işliyor.",
-    "Sen benim en büyük armağanımsın.",
-    "Seninle her anı yaşamaya değer.",
-    "Aşkımız, sonsuzluğa uzanan bir yol.",
-    "Sen benim en güzel şarkılarımsın.",
-    "Seninle olmak, kendimi tamamlanmış hissetmek gibi.",
-    "Sen benim en büyük destekçimsin.",
-    "Seninle her şey daha kolay.",
-    "Aşkımız, dünyadaki en güçlü bağ.",
-    "Sen benim en güzel hayalimsin.",
-    "Seninle olmak, kalbimin en büyük mutluluğu.",
-    "Sen benim hayatımın en güzel melodisisin.",
-    "Seninle her anı bir ömür gibi yaşamak istiyorum.",
-    "Aşkımız, zamanın durduğu bir an.",
-    "Sen benim en güzel şiirlerimsin.",
-    "Seninle olmak, dünyadaki en büyük şansım.",
-    "Gülüşün, kalbimi eriten bir sıcaklık.",
-    "Sen benim en büyük ilham kaynağımsın.",
-    "Seninle her an özel ve anlamlı.",
-    "Aşkımız, bir ressamın en güzel tablosu gibi.",
-    "Sen benim en büyük hayalimi gerçekleştirdin.",
-    "Seninle olmak, kalbimin en derin arzusuydu.",
-    "Sen benim hayatımın en güzel renklerisin.",
-    "Seninle her şey daha anlamlı ve değerli.",
-    "Aşkımız, bir müzisyenin en güzel bestesi gibi.",
-    "Sen benim en büyük ilham kaynağımsın.",
-    "Seninle olmak, dünyadaki en güzel hissi yaşamak gibi.",
-    "Gözlerin, kalbimin en derinlerine işliyor ve beni büyülüyor.",
-    "Sen benim en büyük armağanımsın, hayatıma anlam katan.",
-    "Seninle her anı yaşamaya değer, her anı bir ömür gibi.",
-    "Aşkımız, sonsuzluğa uzanan bir yol, hiç bitmeyecek bir yolculuk.",
-    "Sen benim en güzel şarkılarımsın, kalbimi titreten melodiler.",
-    "Seninle olmak, kendimi tamamlanmış ve mutlu hissetmek gibi.",
-    "Sen benim en büyük destekçimsin, her zaman yanımda olan.",
-    "Seninle her şey daha kolay, her zorluk aşılabilir.",
-    "Aşkımız, dünyadaki en güçlü bağ, kopmaz bir zincir.",
-    "Sen benim en güzel hayalimsin, gerçekleşen bir rüya gibi.",
-    "Seninle olmak, kalbimin en büyük mutluluğu, tarifsiz bir duygu.",
-    "Sen benim hayatımın en güzel melodisisin, ruhumu dans ettiren.",
-    "Seninle her anı bir ömür gibi yaşamak istiyorum, sonsuza kadar.",
-    "Aşkımız, zamanın durduğu bir an, sonsuz bir mutluluk.",
-    "Sen benim en güzel şiirlerimsin, kalbimi dile getiren sözler.",
-    "Seninle olmak, dünyadaki en büyük şansım, en büyük mutluluğum.",
+    "SENİ SEVİYORUM ZEHRA",
+    "Kalbimin Tek Sahibi Zehra",
+    "Seninle Sonsuza Kadar Zehra",
+    "İyi ki Varsın Sevgilim",
+    "Gözlerinde Kaybolmak İstiyorum",
+    "Sen Benim En Güzel Şansımsın",
+    "Gülüşün Dünyamı Aydınlatıyor",
+    "Senin Götünü Yerim Zehram",
+    "Hayatımın Anlamı Sensin",
+    "Senin Götünü Yerim Zehram",
+    "Seninle Her Şey Çok Daha Güzel",
+    "Kalbimin Ritmi Senin Adınla Atıyor",
+    "Sen Benim En Güzel Melodimsin",
+    "Geleceğe Seninle Bakıyorum",
+    "Sen Benim En Değerli Hazinemsin",
+    "Yanında Kendimi Evimde Hissediyorum",
+    "Her Yeni Gün Seninle Bir Macera",
+    "Kalbimin En Derin Köşesi Senin",
+    "Sen Benim En Güzel Hikayemsin",
+    "Dünyadaki En Büyük Şansım Sensin",
+    "Seni Her Gün Daha Çok Seviyorum",
+    "Zehra, Sen Benim Her Şeyimsin"
 ];
 
+// Daha okunabilir ve estetik font listesi
 const fontFamilies = [
-    "Arial",
-    "Helvetica",
-    "Verdana",
-    "Georgia",
-    "Times New Roman",
-    "Courier New",
-    "Brush Script MT",
-    "Impact",
-    "Comic Sans MS",
-    "Lucida Console"
+    "'Playfair Display', serif", // Şık ve klasik
+    "'Montserrat', sans-serif",   // Modern ve temiz
+    "'Open Sans', sans-serif"     // Sade ve çok okunabilir
 ];
 
-let msgIdx = 0, mainMsgIdx = 0, fontIdx = 0;
+let msgIdx = 0;
+let isFirstClick = true;
 
-mainMessages.forEach(msg => {
-    const p = document.createElement('p');
-    p.textContent = msg;
-    msgsContainer.appendChild(p);
-});
-
-document.addEventListener('click', (event) => {
-    if (event.detail > 1) {
-        event.preventDefault();
-        return;
+// Ekrana tıklama olayı
+clickArea.addEventListener('click', () => {
+    // İlk tıklamada müziği başlat ve ipucu yazısını kaldır
+    if (isFirstClick) {
+        hintText.style.display = 'none';
+        // Eğer src kısmına müzik eklediysen burada çalar
+        // audio.play().catch(e => console.log("Müzik çalma hatası (tarayıcı engeli olabilir):", e));
+        isFirstClick = false;
     }
 
-    mainMsg.textContent = mainMessages[mainMsgIdx++ % mainMessages.length]; 
-    mainMsg.style.fontFamily = fontFamilies[fontIdx++ % fontFamilies.length];
+    // Efektli geçiş
+    mainMsg.classList.add('fade-out');
 
-    adjustFontSizeToFit(mainMsg);
+    setTimeout(() => {
+        // Mesajı ve fontu değiştir
+        msgIdx = (msgIdx + 1) % mainMessages.length;
+        mainMsg.textContent = mainMessages[msgIdx];
+        
+        // Rastgele bir font seç
+        const randomFont = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
+        mainMsg.style.fontFamily = randomFont;
+        
+        // Font boyutunu ayarla
+        adjustFontSize();
 
-    if (msgIdx < msgsContainer.children.length) {
-        msgsContainer.children[msgIdx++].classList.add('visible');
-    }
+        // Geri getir
+        mainMsg.classList.remove('fade-out');
+        
+        // Her tıklamada ekstra kalp patlaması yap
+        createBurstHearts();
+    }, 500); // 0.5 saniye bekle (fade-out süresi kadar)
 });
 
-function adjustFontSizeToFit(element) {
-    let fontSize = parseInt(window.getComputedStyle(element).fontSize);
+// Font boyutunu ekrana sığacak şekilde ayarla
+function adjustFontSize() {
+    const length = mainMsg.textContent.length;
+    let size;
+    
+    // Metin uzunluğuna göre daha iyi bir boyutlandırma
+    if (length < 15) size = "12vw";
+    else if (length < 25) size = "8vw";
+    else size = "6vw";
 
-    while (element.scrollWidth > element.clientWidth && fontSize > 0) {
-        fontSize--;
-        element.style.fontSize = fontSize + "px";
+    mainMsg.style.fontSize = size;
+}
+
+// Arka plan kalpleri oluşturma fonksiyonu
+function createHeart() {
+    const heart = document.createElement('div');
+    heart.classList.add('heart');
+    
+    // Rastgele pozisyon ve boyut
+    heart.style.left = Math.random() * 100 + "vw";
+    heart.style.animation = `floatUp ${Math.random() * 3 + 4}s ease-out forwards`; // 4-7 saniye arası
+    
+    // Rastgele renk tonları (pembe/kırmızı/beyaz)
+    const colors = ["rgba(255, 255, 255, 0.6)", "rgba(255, 182, 193, 0.6)", "rgba(255, 105, 180, 0.5)"];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    heart.style.backgroundColor = randomColor;
+    heart.style.setProperty('--heart-color', randomColor); // pseudo elementler için renk değişkeni
+
+    document.body.appendChild(heart);
+
+    // 6 saniye sonra DOM'dan sil (performans için)
+    setTimeout(() => {
+        heart.remove();
+    }, 7000); // Animasyon süresine göre ayarlandı
+}
+
+// Tıklayınca çoklu kalp çıkarma efekti
+function createBurstHearts() {
+    for(let i=0; i<5; i++) {
+        setTimeout(createHeart, i * 100);
     }
 }
+
+// Sayfa açılınca düzenli aralıklarla kalp üret
+setInterval(createHeart, 600); // Kalp çıkma sıklığı azaltıldı
+
+// Başlangıç ayarı
+mainMsg.style.fontFamily = "'Playfair Display', serif"; // Başlangıçta daha şık bir font
+adjustFontSize();
+
 </script>
 </body>
 </html>
